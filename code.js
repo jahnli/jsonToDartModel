@@ -634,7 +634,7 @@ $(function () {
     checkBoxBinding("usingJsonKeyCheckBox", false);
     checkBoxBinding("nullSafeCheckBox", true);
     checkBoxBinding("camelCheckBox", true);
-    checkBoxBinding("faultToleranceCheckBox", true);
+    checkBoxBinding("faultToleranceCheckBox", false);
     checkBoxBinding("forceStringCheckBox", false);
     checkBoxBinding("origJsonCheckBox", false);
 
