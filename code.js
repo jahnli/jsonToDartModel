@@ -387,7 +387,8 @@ $(function () {
           return objToDart(jsonObj[0], prefix, baseClass);
         }
 
-        let lines = [];
+        let classLines = []; // 当前类的行
+        let childClasses = []; // 子类的代码字符串数组
 
         let jsonKeysLines = [];
 
@@ -410,8 +411,8 @@ $(function () {
           className = snakeToCamel(className);
         }
 
-        lines.push(`class ${className} {`);
-        lines.push(`/*\r\n${JSON.stringify(jsonObj, null, 2)} \r\n*/\r\n`);
+        classLines.push(`class ${className} {`);
+        classLines.push(`/*\r\n${JSON.stringify(jsonObj, null, 2)} \r\n*/\r\n`);
 
         constructorLines.push(`  ${className}({\n`);
         fromJsonLines.push(
@@ -480,10 +481,12 @@ $(function () {
                 fromJsonLines.push(fromJsonLinesJoined);
                 toJsonLines.push(toJsonLinesJoined);
                 if (typeof inner === "object") {
-                  lines.unshift(objToDart(element, className, key));
+                  // 将子类代码添加到子类数组
+                  childClasses.push(objToDart(element, className, key));
                 }
               } else {
-                lines.unshift(objToDart(element, className, key));
+                // 将子类代码添加到子类数组
+                childClasses.push(objToDart(element, className, key));
                 propsLines.push(
                   `  ${subClassName}${shouldNullSafe ? "?" : ""} ${legalKey};\n`
                 );
@@ -540,26 +543,34 @@ $(function () {
           propsLines.push(`  Map<String, dynamic> __origJson = {};\n`);
         }
         if (shouldUsingJsonKey) {
-          lines.unshift(jsonKeysLines.join("\n"));
+          classLines.unshift(jsonKeysLines.join("\n"));
         }
 
         constructorLines.push(`  });`);
         fromJsonLines.push(`  }`);
         toJsonLines.push(`    return data;\n  }`);
 
-        lines.push(propsLines.join(""));
-        lines.push(constructorLines.join(""));
-        lines.push(fromJsonLines.join(""));
-        lines.push(toJsonLines.join(""));
+        classLines.push(propsLines.join(""));
+        classLines.push(constructorLines.join(""));
+        classLines.push(fromJsonLines.join(""));
+        classLines.push(toJsonLines.join(""));
         if (shouldOridJson) {
-          lines.push(`  Map<String, dynamic> origJson() => __origJson;`);
+          classLines.push(`  Map<String, dynamic> origJson() => __origJson;`);
         }
 
-        lines.push(`}\n`);
+        classLines.push(`}\n`);
 
-        let linesOutput = lines.join("\r\n");
+        let currentClassOutput = classLines.join("\r\n");
 
-        return linesOutput;
+        // 组合所有类的输出
+        // 先添加当前类，然后是子类
+        let finalOutput = currentClassOutput;
+        if (childClasses.length > 0) {
+          // 把子类添加到输出中，每个子类之间添加换行
+          finalOutput += "\n" + childClasses.join("\n");
+        }
+
+        return finalOutput;
       };
 
       removeSurplusElement(jsonObj);
